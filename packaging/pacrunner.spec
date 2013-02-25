@@ -26,7 +26,7 @@ Pacrunner tests
 %setup -q
 
 %build
-%configure  --enable-v8 \
+%reconfigure --enable-v8 \
             --enable-curl \
             --enable-test
 make %{?_smp_mflags}
@@ -44,7 +44,7 @@ make %{?_smp_mflags}
 %license COPYING
 %{_sysconfdir}/dbus-1/system.d/pacrunner.conf
 /usr/sbin/pacrunner
-/usr/share/dbus-1/system-services/pacrunner.service
+/usr/share/dbus-1/system-services/org.pacrunner.service
 
 
 %files test
