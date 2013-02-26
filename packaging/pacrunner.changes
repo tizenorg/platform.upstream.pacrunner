@@ -1,3 +1,6 @@
+* Tue Feb 26 2013 Anas Nashif <anas.nashif@intel.com> upstream/0.6@31a0ffd
+- Update to 0.6
+
 * Mon Feb 25 2013 Patrick McCarty <patrick.mccarty@linux.intel.com> 3ddcf93
 - (TZPC-994) Fix D-Bus service file name
 
