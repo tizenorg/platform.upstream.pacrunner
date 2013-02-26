@@ -104,9 +104,11 @@ static DBusMessage *find_proxy_for_url(DBusConnection *conn,
 	return NULL;
 }
 
-static GDBusMethodTable client_methods[] = {
-	{ "FindProxyForURL", "ss", "s", find_proxy_for_url,
-						G_DBUS_METHOD_FLAG_ASYNC  },
+static const GDBusMethodTable client_methods[] = {
+	{ GDBUS_ASYNC_METHOD("FindProxyForURL",
+			GDBUS_ARGS({ "url", "s" }, { "host", "s" }),
+			GDBUS_ARGS({ "proxy", "s" }),
+			find_proxy_for_url) },
 	{ },
 };
 

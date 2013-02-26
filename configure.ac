@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT(pacrunner, 0.5)
+AC_INIT(pacrunner, 0.6)
 
 AM_INIT_AUTOMAKE([foreign subdir-objects color-tests])
 AM_CONFIG_HEADER(config.h)
@@ -10,7 +10,7 @@ AM_MAINTAINER_MODE
 
 AC_PREFIX_DEFAULT(/usr/local)
 
-if (test "${libdir}" = '${exec_prefix}/lib'); then
+if (test "${libdir}" = "${exec_prefix}/lib"); then
 	libdir="${prefix}/lib"
 fi
 
@@ -72,13 +72,8 @@ AC_ARG_ENABLE(pie, AC_HELP_STRING([--enable-pie],
 AC_ARG_ENABLE(mozjs, AC_HELP_STRING([--enable-mozjs],
 		[enable Mozilla Javascript plugin support]))
 if (test "${enable_mozjs}" = "yes"); then
-	PKG_CHECK_MODULES(MOZJS,  mozilla-js >= 1.9, dummy=yes,
-			AC_MSG_ERROR(Mozilla Javascript >= 1.9 is required))
-
-	mozjs_version=`pkg-config --modversion mozilla-js | cut -d '.' -f 1`
-	if test ${mozjs_version} -gt 1; then
-		MOZJS_CFLAGS="${MOZJS_CFLAGS} -DMOZJS_VERSION_2_OR_SUPERIOR=1"
-	fi
+	PKG_CHECK_MODULES(MOZJS,  mozjs185, dummy=yes,
+			AC_MSG_ERROR(Mozilla Javascript >= 1.8 is required))
 
 	AC_SUBST(MOZJS_CFLAGS)
 	AC_SUBST(MOZJS_LIBS)
@@ -125,23 +120,13 @@ else
 fi
 AC_SUBST(DBUS_DATADIR)
 
-AC_ARG_ENABLE(capng, AC_HELP_STRING([--enable-capng],
-		[enable capabilities support]), [enable_capng=${enableval}])
-if (test "${enable_capng}" = "yes"); then
-	PKG_CHECK_MODULES(CAPNG, libcap-ng, dummy=yes,
-				AC_MSG_ERROR(Capabilities library is required))
-	AC_SUBST(CAPNG_CFLAGS)
-	AC_SUBST(CAPNG_LIBS)
-	AC_DEFINE(HAVE_CAPNG, 1, [Define to 1 if you have capabilities library.])
-fi
-
 PKG_CHECK_MODULES(GTHREAD, gthread-2.0 >= 2.16, dummy=yes,
 			AC_MSG_ERROR(GThread >= 2.16 is required))
 AC_SUBST(GTHREAD_CFLAGS)
 AC_SUBST(GTHREAD_LIBS)
 
 AC_ARG_ENABLE(curl, AC_HELP_STRING([--enable-curl],
-		[enable CURL plugin support]), [enable_capng=${enableval}])
+		[enable CURL plugin support]), [enable_curl=${enableval}])
 if (test "${enable_curl}" = "yes"); then
 	PKG_CHECK_MODULES(CURL, libcurl >= 7.16, dummy=yes,
 				AC_MSG_ERROR(CURL >= 7.16 is required))
