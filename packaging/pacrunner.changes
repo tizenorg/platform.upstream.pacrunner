@@ -1,3 +1,6 @@
+* Tue Feb 26 2013 Anas Nashif <anas.nashif@intel.com> submit/trunk/20130226.174223@89e6416
+- obsolete old libproxy
+
 * Tue Feb 26 2013 Anas Nashif <anas.nashif@intel.com> upstream/0.6@31a0ffd
 - Update to 0.6
 
