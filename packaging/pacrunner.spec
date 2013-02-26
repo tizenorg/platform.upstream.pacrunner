@@ -1,5 +1,5 @@
 Name:           pacrunner
-Version:        0.5
+Version:        0.6
 Release:        0
 License:        GPL-2.0+
 Url:            http://connman.net/
@@ -46,7 +46,7 @@ Libproxy library.
 %package libproxy-devel
 Summary:        Libproxy library Development Files
 Group:          Development/Libraries
-Requires:       libproxy = %{version}
+Requires:       pacrunner-libproxy = %{version}
 
 %description  libproxy-devel
 PACrunner - Proxy configuration daemon.
