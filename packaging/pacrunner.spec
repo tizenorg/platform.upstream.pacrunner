@@ -37,6 +37,10 @@ Libproxy library Tools.
 Summary:        Libproxy library
 Group:          Connectivity/Connection Management
 Requires:       %{name} = %{version}
+Provides:       libproxy <= 0.4.11-2
+Obsoletes:      libproxy <= 0.4.11-2
+Provides:       libproxy-pacrunner-webkit <= 0.4.11-2
+Obsoletes:      libproxy-pacrunner-webkit <= 0.4.11-2
 
 %description libproxy
 PACrunner - Proxy configuration daemon.
@@ -47,6 +51,8 @@ Libproxy library.
 Summary:        Libproxy library Development Files
 Group:          Development/Libraries
 Requires:       pacrunner-libproxy = %{version}
+Provides:       libproxy-devel <= 0.4.11-2
+Obsoletes:      libproxy-devel <= 0.4.11-2
 
 %description  libproxy-devel
 PACrunner - Proxy configuration daemon.
