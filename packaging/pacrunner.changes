@@ -1,3 +1,9 @@
+* Wed Apr 24 2013 Michael Leibowitz <michael.leibowitz@intel.com> 9046406
+- Change pacrunner to run as nobody
+
+* Thu Mar 21 2013 Joshua Lock <joshua.lock@intel.com> 989c870
+- Remove Mozilla-ism from isInNet() JavaScript function
+
 * Tue Feb 26 2013 Anas Nashif <anas.nashif@intel.com> submit/trunk/20130226.174223@89e6416
 - obsolete old libproxy
 
