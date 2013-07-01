@@ -6,6 +6,7 @@ Url:            http://connman.net/
 Summary:        Proxy configuration daemon
 Group:          Connectivity/Connection Management
 Source:         %{name}-%{version}.tar.xz
+Source1001: 	pacrunner.manifest
 BuildRequires:  v8-devel
 BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  pkgconfig(glib-2.0)
@@ -61,6 +62,7 @@ Libproxy library Development Files.
 
 %prep
 %setup -q
+cp %{SOURCE1001} .
 
 %build
 %reconfigure --enable-v8 \
@@ -78,6 +80,7 @@ make %{?_smp_mflags}
 %postun  libproxy -p /sbin/ldconfig
 
 %files
+%manifest %{name}.manifest
 %defattr(-,root,root)
 %license COPYING
 %{_sysconfdir}/dbus-1/system.d/pacrunner.conf
@@ -85,20 +88,24 @@ make %{?_smp_mflags}
 /usr/share/dbus-1/system-services/org.pacrunner.service
 
 %files  proxy-tools
+%manifest %{name}.manifest
 %defattr(-,root,root)
 %{_bindir}/proxy
 
 %files  libproxy
+%manifest %{name}.manifest
 %defattr(-,root,root)
 %{_libdir}/libproxy.so.*
 
 %files  libproxy-devel
+%manifest %{name}.manifest
 %defattr(-,root,root)
 %{_includedir}/proxy.h
 %{_libdir}/libproxy.so
 %{_libdir}/pkgconfig/libproxy-1.0.pc
 
 %files test
+%manifest %{name}.manifest
 %{_libdir}/pacrunner/test/create-proxy-config
 %{_libdir}/pacrunner/test/find-proxy-for-url
 %{_bindir}/manual-proxy-test
