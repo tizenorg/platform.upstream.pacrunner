@@ -1,3 +1,6 @@
+* Wed Jul 24 2013 Arron Wang <arron.wang@intel.com> submit/tizen/20130723.090921@099761c
+- backport upstream patch: libproxy: Remove useless output
+
 * Fri Jul 12 2013 Arron Wang <arron.wang@intel.com> upstream/0.7@6d4d3f8
 - Rebased to version 0.7
 - Imported Upstream version 0.7
