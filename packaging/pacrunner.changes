@@ -1,3 +1,7 @@
+* Fri Jul 12 2013 Arron Wang <arron.wang@intel.com> upstream/0.7@6d4d3f8
+- Rebased to version 0.7
+- Imported Upstream version 0.7
+
 * Wed Apr 24 2013 Michael Leibowitz <michael.leibowitz@intel.com> 9046406
 - Change pacrunner to run as nobody
 
