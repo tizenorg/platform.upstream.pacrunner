@@ -1,3 +1,19 @@
+* Fri Jul 12 2013 Arron Wang <arron.wang@intel.com> upstream/0.7@6d4d3f8
+- Rebased to version 0.7
+- resetting manifest requested domain to floor
+- Update changelog
+- Change pacrunner to run as nobody
+- obsolete old libproxy
+- obsolete old libproxy
+- Update to 0.6
+- update to 0.6
+- build with libproxy
+- Fix D-Bus service file name
+- build tests and curl plugin
+- add changelog file
+- add packaging
+- Imported Upstream version 0.7
+
 * Wed Apr 24 2013 Michael Leibowitz <michael.leibowitz@intel.com> 9046406
 - Change pacrunner to run as nobody
 

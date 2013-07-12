@@ -1,5 +1,5 @@
 Name:           pacrunner
-Version:        0.6
+Version:        0.7
 Release:        0
 License:        GPL-2.0+
 Url:            http://connman.net/
