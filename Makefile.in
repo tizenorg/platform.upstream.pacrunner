@@ -74,7 +74,7 @@ sbin_PROGRAMS = src/pacrunner$(EXEEXT)
 @CURL_TRUE@@UNIT_TRUE@am__append_12 = plugins/curl.c
 @CURL_TRUE@@UNIT_TRUE@am__append_13 = @CURL_LIBS@
 @MOZJS_TRUE@@UNIT_TRUE@am__append_14 = plugins/mozjs.c
-@MOZJS_TRUE@@UNIT_TRUE@am__append_15 = @MOZJS_LIBS@
+@MOZJS_TRUE@@UNIT_TRUE@am__append_15 = @MOZJS_LIBS@ @PTHREAD_LIBS@
 @MOZJS_TRUE@@UNIT_TRUE@am__append_16 = unit/test-mozjs
 @UNIT_TRUE@@V8_TRUE@am__append_17 = plugins/v8.cc
 @UNIT_TRUE@@V8_TRUE@am__append_18 = @V8_LIBS@
@@ -179,7 +179,7 @@ am__tools_manual_proxy_test_SOURCES_DIST = tools/manual-proxy-test.c
 @LIBPROXY_TRUE@	tools/manual-proxy-test.$(OBJEXT)
 tools_manual_proxy_test_OBJECTS =  \
 	$(am_tools_manual_proxy_test_OBJECTS)
-tools_manual_proxy_test_LDADD = $(LDADD)
+tools_manual_proxy_test_DEPENDENCIES =
 am__tools_proxy_SOURCES_DIST = tools/proxy.c
 @LIBPROXY_TRUE@am_tools_proxy_OBJECTS = tools/proxy.$(OBJEXT)
 tools_proxy_OBJECTS = $(am_tools_proxy_OBJECTS)
@@ -327,8 +327,6 @@ FGREP = @FGREP@
 GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 GREP = @GREP@
-GTHREAD_CFLAGS = @GTHREAD_CFLAGS@
-GTHREAD_LIBS = @GTHREAD_LIBS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -365,6 +363,7 @@ PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
 PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
+PTHREAD_LIBS = @PTHREAD_LIBS@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -444,7 +443,7 @@ src_pacrunner_SOURCES = $(gdbus_sources) $(builtin_sources) \
 			src/client.c src/manager.c src/proxy.c \
 			src/manual.c src/js.h src/js.c src/javascript.h
 
-src_pacrunner_LDADD = $(builtin_libadd) @GLIB_LIBS@ @GTHREAD_LIBS@ \
+src_pacrunner_LDADD = $(builtin_libadd) @GLIB_LIBS@ @PTHREAD_LIBS@ \
 							@DBUS_LIBS@ -ldl
 
 src_pacrunner_LDFLAGS = -Wl,--export-dynamic
@@ -459,25 +458,26 @@ plugindir = $(libdir)/pacrunner/plugins
 @DATAFILES_TRUE@@LIBPROXY_TRUE@pkgconfig_DATA = libproxy/libproxy-1.0.pc
 @LIBPROXY_TRUE@tools_proxy_SOURCES = tools/proxy.c
 @LIBPROXY_TRUE@tools_proxy_LDADD = libproxy/libproxy.la
+@LIBPROXY_TRUE@tools_manual_proxy_test_LDADD = @GLIB_LIBS@
 @LIBPROXY_TRUE@tools_manual_proxy_test_SOURCES = tools/manual-proxy-test.c
 @UNIT_TRUE@unit_test_pacrunner_SOURCES = unit/test-pacrunner.c \
 @UNIT_TRUE@	src/pacrunner.h src/proxy.c src/manual.c \
 @UNIT_TRUE@	src/download.c src/js.c src/log.c src/plugin.c \
 @UNIT_TRUE@	$(am__append_12) $(am__append_14) $(am__append_17)
-@UNIT_TRUE@unit_test_pacrunner_LDADD = @GLIB_LIBS@ $(am__append_13) \
-@UNIT_TRUE@	$(am__append_15) $(am__append_18)
+@UNIT_TRUE@unit_test_pacrunner_LDADD = @GLIB_LIBS@ -ldl \
+@UNIT_TRUE@	$(am__append_13) $(am__append_15) $(am__append_18)
 @MOZJS_TRUE@@UNIT_TRUE@unit_test_mozjs_SOURCES = unit/test-mozjs.c src/pacrunner.h \
 @MOZJS_TRUE@@UNIT_TRUE@			src/proxy.c src/manual.c src/download.c \
 @MOZJS_TRUE@@UNIT_TRUE@				src/js.c plugins/mozjs.c
 
-@MOZJS_TRUE@@UNIT_TRUE@unit_test_mozjs_LDADD = @MOZJS_LIBS@ @GLIB_LIBS@ @GTHREAD_LIBS@
-AM_CFLAGS = @GLIB_CFLAGS@ @GTHREAD_LIBS@ @DBUS_CFLAGS@ \
-					$(builtin_cflags) \
-					-DPACRUNNER_PLUGIN_BUILTIN \
-					-DPLUGINDIR=\""$(plugindir)"\"
+@MOZJS_TRUE@@UNIT_TRUE@unit_test_mozjs_LDADD = @MOZJS_LIBS@ @GLIB_LIBS@ @PTHREAD_LIBS@
+AM_CFLAGS = @GLIB_CFLAGS@ @PTHREAD_LIBS@ @DBUS_CFLAGS@ \
+				$(builtin_cflags) \
+				-DPACRUNNER_PLUGIN_BUILTIN \
+				-DPLUGINDIR=\""$(plugindir)"\"
 
 AM_CXXFLAGS = $(AM_CFLAGS)
-INCLUDES = -I$(builddir)/src -I$(srcdir)/src -I$(srcdir)/gdbus
+AM_CPPFLAGS = -I$(builddir)/src -I$(srcdir)/src -I$(srcdir)/gdbus
 test_scripts = test/find-proxy-for-url test/create-proxy-config
 @TEST_TRUE@testdir = $(pkglibdir)/test
 @TEST_TRUE@test_SCRIPTS = $(test_scripts)

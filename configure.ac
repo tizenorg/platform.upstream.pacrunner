@@ -1,8 +1,8 @@
 AC_PREREQ(2.60)
-AC_INIT(pacrunner, 0.6)
+AC_INIT(pacrunner, 0.7)
 
 AM_INIT_AUTOMAKE([foreign subdir-objects color-tests])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
@@ -120,10 +120,10 @@ else
 fi
 AC_SUBST(DBUS_DATADIR)
 
-PKG_CHECK_MODULES(GTHREAD, gthread-2.0 >= 2.16, dummy=yes,
-			AC_MSG_ERROR(GThread >= 2.16 is required))
-AC_SUBST(GTHREAD_CFLAGS)
-AC_SUBST(GTHREAD_LIBS)
+AC_CHECK_LIB(pthread, pthread_create,
+	[PTHREAD_LIBS="-lpthread"],
+	[AC_MSG_ERROR([Pthread support is missing])])
+AC_SUBST(PTHREAD_LIBS)
 
 AC_ARG_ENABLE(curl, AC_HELP_STRING([--enable-curl],
 		[enable CURL plugin support]), [enable_curl=${enableval}])
