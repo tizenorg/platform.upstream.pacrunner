@@ -83,11 +83,11 @@ static struct proxy_config *create_config(DBusConnection *conn,
 	struct proxy_config *config;
 
 	config = g_try_new0(struct proxy_config, 1);
-	if (config == NULL)
+	if (!config)
 		return NULL;
 
 	config->proxy = pacrunner_proxy_create(interface);
-	if (config->proxy == NULL) {
+	if (!config->proxy) {
 		g_free(config);
 		return NULL;
 	}
@@ -111,7 +111,7 @@ static char **extract_string_array(DBusMessageIter *array)
 	int index;
 
 	str = g_try_new(char *, 11);
-	if (str == NULL)
+	if (!str)
 		return NULL;
 
 	index = 0;
@@ -121,7 +121,7 @@ static char **extract_string_array(DBusMessageIter *array)
 
 		dbus_message_iter_get_basic(array, &value);
 
-		if (value == NULL || index > 9)
+		if (!value || index > 9)
 			break;
 
 		str[index++] = g_strdup(value);
@@ -162,19 +162,19 @@ static DBusMessage *create_proxy_config(DBusConnection *conn,
 
 		switch (dbus_message_iter_get_arg_type(&value)) {
 		case DBUS_TYPE_STRING:
-			if (g_str_equal(key, "Method") == TRUE) {
+			if (g_str_equal(key, "Method")) {
 				dbus_message_iter_get_basic(&value, &method);
 				if (strlen(method) == 0)
 					method = NULL;
-			} else if (g_str_equal(key, "URL") == TRUE) {
+			} else if (g_str_equal(key, "URL")) {
 				dbus_message_iter_get_basic(&value, &url);
 				if (strlen(url) == 0)
 					url = NULL;
-			} else if (g_str_equal(key, "Script") == TRUE) {
+			} else if (g_str_equal(key, "Script")) {
 				dbus_message_iter_get_basic(&value, &script);
 				if (strlen(script) == 0)
 					script = NULL;
-			} else if (g_str_equal(key, "Interface") == TRUE) {
+			} else if (g_str_equal(key, "Interface")) {
 				dbus_message_iter_get_basic(&value, &interface);
 				if (strlen(interface) == 0)
 					interface = NULL;
@@ -187,16 +187,16 @@ static DBusMessage *create_proxy_config(DBusConnection *conn,
 							DBUS_TYPE_INVALID)
 				break;
 
-			if (g_str_equal(key, "Servers") == TRUE) {
+			if (g_str_equal(key, "Servers")) {
 				g_strfreev(servers);
 				servers = extract_string_array(&list);
-			} else if (g_str_equal(key, "Excludes") == TRUE) {
+			} else if (g_str_equal(key, "Excludes")) {
 				g_strfreev(excludes);
 				excludes = extract_string_array(&list);
-			} else if (g_str_equal(key, "Domains") == TRUE) {
+			} else if (g_str_equal(key, "Domains")) {
 				g_strfreev(domains);
 				domains = extract_string_array(&list);
-			} else if (g_str_equal(key, "Nameservers") == TRUE) {
+			} else if (g_str_equal(key, "Nameservers")) {
 				g_strfreev(nameservers);
 				nameservers = extract_string_array(&list);
 			}
@@ -209,7 +209,7 @@ static DBusMessage *create_proxy_config(DBusConnection *conn,
 	DBG("sender %s method %s interface %s", sender, method, interface);
 	DBG("url %s script %p", url, script);
 
-	if (method == NULL) {
+	if (!method) {
 		reply = g_dbus_create_error(msg,
 					PACRUNNER_ERROR_INTERFACE ".Failed",
 					"No proxy method specified");
@@ -217,7 +217,7 @@ static DBusMessage *create_proxy_config(DBusConnection *conn,
 	}
 
 	config = create_config(conn, sender, interface);
-	if (config == NULL) {
+	if (!config) {
 		reply = g_dbus_create_error(msg,
 					PACRUNNER_ERROR_INTERFACE ".Failed",
 					"Memory allocation failed");
@@ -230,14 +230,14 @@ static DBusMessage *create_proxy_config(DBusConnection *conn,
 	domains = NULL;
 	nameservers = NULL;
 
-	if (g_str_equal(method, "direct") == TRUE) {
+	if (g_str_equal(method, "direct")) {
 		if (pacrunner_proxy_set_direct(config->proxy) < 0)
 			pacrunner_error("Failed to set direct proxy");
-	} else if (g_str_equal(method, "manual") == TRUE) {
+	} else if (g_str_equal(method, "manual")) {
 		if (pacrunner_proxy_set_manual(config->proxy,
 						servers, excludes) < 0)
 			pacrunner_error("Failed to set proxy servers");
-	} else if (g_str_equal(method, "auto") == TRUE) {
+	} else if (g_str_equal(method, "auto")) {
 		if (pacrunner_proxy_set_auto(config->proxy, url, script) < 0)
 			pacrunner_error("Failed to set auto proxy");
 	} else {

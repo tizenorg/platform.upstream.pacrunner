@@ -59,20 +59,20 @@ struct pacrunner_test_suite {
 	gchar **servers;
 	gchar **excludes;
 
-	gboolean config_result;
+	bool config_result;
 
 	gchar **tests;
 };
 
 static struct pacrunner_test_suite *test_suite;
-static gboolean verbose = FALSE;
+static bool verbose = false;
 
 static struct pacrunner_proxy *proxy;
-static gboolean test_config;
+static bool test_config;
 
 static void free_pacrunner_test_suite(struct pacrunner_test_suite *suite)
 {
-	if (suite == NULL)
+	if (!suite)
 		return;
 
 	g_free(suite->title);
@@ -90,23 +90,23 @@ static gchar **_g_strappendv(gchar **str_array, const gchar *str)
 	gchar **result;
 	gchar *copy;
 
-	if (str == NULL)
+	if (!str)
 		return NULL;
 
-	if (str_array != NULL)
+	if (str_array)
 		length = g_strv_length(str_array);
 
 	result = g_try_malloc0(sizeof(gchar *) * (length + 2));
-	if (result == NULL)
+	if (!result)
 		return NULL;
 
 	copy = g_strdup(str);
-	if (copy == NULL) {
+	if (!copy) {
 		g_free(result);
 		return NULL;
 	}
 
-	if (str_array != NULL) {
+	if (str_array) {
 		g_memmove(result, str_array, length * sizeof(gchar *));
 		memset(str_array, 0, length * sizeof(gchar *));
 	}
@@ -120,7 +120,7 @@ static void print_test_suite(struct pacrunner_test_suite *suite)
 {
 	gchar **line;
 
-	if (suite == NULL)
+	if (!suite)
 		return;
 
 	printf("\nSuite: %s\n", suite->title);
@@ -128,28 +128,28 @@ static void print_test_suite(struct pacrunner_test_suite *suite)
 	printf("\nPAC:\n%s\n", suite->pac);
 
 	printf("\nServers:\n");
-	if (suite->servers != NULL) {
-		for (line = suite->servers; *line != NULL; line++)
+	if (suite->servers) {
+		for (line = suite->servers; *line; line++)
 			printf("%s\n", *line);
 	} else
 		printf("(none)\n");
 
 
 	printf("\nExcludes:\n");
-	if (suite->excludes != NULL) {
-		for (line = suite->excludes; *line != NULL; line++)
+	if (suite->excludes) {
+		for (line = suite->excludes; *line; line++)
 			printf("%s\n", *line);
 	} else
 		printf("(none)\n");
 
 	printf("\nConfig result: %s\n",
-			suite->config_result == TRUE ? "Valid" : "Invalid");
+			suite->config_result ? "Valid" : "Invalid");
 
 	printf("\nTests:\n");
-	if (suite->tests != NULL) {
+	if (suite->tests) {
 		short test = 0;
 
-		for (line = suite->tests; *line != NULL; line++) {
+		for (line = suite->tests; *line; line++) {
 			if (test == 0) {
 				printf("%s --> ", *line);
 				test++;
@@ -174,20 +174,20 @@ static struct pacrunner_test_suite *read_test_suite(const char *path)
 	gchar **line;
 
 	suite = g_try_malloc0(sizeof(struct pacrunner_test_suite));
-	if (suite == NULL)
+	if (!suite)
 		goto error;
 
-	if (g_file_get_contents(path, &content, NULL, NULL) == FALSE)
+	if (!g_file_get_contents(path, &content, NULL, NULL))
 		goto error;
 
 	if (strlen(content) <= 0)
 		goto error;
 
 	lines = g_strsplit(content, "\n", 0);
-	if (lines == NULL)
+	if (!lines)
 		goto error;
 
-	for (line = lines; *line != NULL; line++) {
+	for (line = lines; *line; line++) {
 		if (strlen(*line) == 0)
 			continue;
 
@@ -197,17 +197,17 @@ static struct pacrunner_test_suite *read_test_suite(const char *path)
 		if (*line[0] != '[') {
 			switch (part) {
 			case SUITE_TITLE:
-				if (suite->title != NULL)
+				if (suite->title)
 					goto error;
 
 				suite->title = g_strdup(*line);
 
-				if (suite->title == NULL)
+				if (!suite->title)
 					goto error;
 
 				break;
 			case SUITE_PAC:
-				if (suite->pac == NULL)
+				if (!suite->pac)
 					suite->pac = g_strdup_printf("%s\n",
 									*line);
 				else {
@@ -218,13 +218,13 @@ static struct pacrunner_test_suite *read_test_suite(const char *path)
 					g_free(oldpac);
 				}
 
-				if (suite->pac == NULL)
+				if (!suite->pac)
 					goto error;
 
 				break;
 			case SUITE_SERVERS:
 				array = _g_strappendv(suite->servers, *line);
-				if (array == NULL)
+				if (!array)
 					goto error;
 
 				g_free(suite->servers);
@@ -233,7 +233,7 @@ static struct pacrunner_test_suite *read_test_suite(const char *path)
 				break;
 			case SUITE_EXCLUDES:
 				array = _g_strappendv(suite->excludes, *line);
-				if (array == NULL)
+				if (!array)
 					goto error;
 
 				g_free(suite->excludes);
@@ -242,14 +242,14 @@ static struct pacrunner_test_suite *read_test_suite(const char *path)
 				break;
 			case SUITE_CONFIG:
 				if (strncmp(*line, "VALID", 5) == 0)
-					suite->config_result = TRUE;
+					suite->config_result = true;
 				else
-					suite->config_result = FALSE;
+					suite->config_result = false;
 
 				break;
 			case SUITE_TESTS:
 				array = _g_strappendv(suite->tests, *line);
-				if (array == NULL)
+				if (!array)
 					goto error;
 
 				g_free(suite->tests);
@@ -278,12 +278,12 @@ static struct pacrunner_test_suite *read_test_suite(const char *path)
 			part = SUITE_TESTS;
 	}
 
-	if (verbose == TRUE)
+	if (verbose)
 		print_test_suite(suite);
 
-	if (suite->title == NULL || (suite->tests != NULL
+	if (!suite->title || (suite->tests
 			&& g_strv_length(suite->tests) % 2 != 0)
-			|| (suite->servers == NULL && suite->pac == NULL))
+			|| (!suite->servers && !suite->pac))
 		goto error;
 
 	g_free(content);
@@ -303,7 +303,7 @@ error:
 static int test_suite_init(void)
 {
 	proxy = pacrunner_proxy_create("eth0");
-	if (proxy == NULL)
+	if (!proxy)
 		return -1;
 
 	return 0;
@@ -311,7 +311,7 @@ static int test_suite_init(void)
 
 static int test_suite_cleanup(void)
 {
-	if (test_config == TRUE) {
+	if (test_config) {
 		if (pacrunner_proxy_disable(proxy) != 0)
 			return -1;
 	}
@@ -324,7 +324,7 @@ static int test_suite_cleanup(void)
 static void test_pac_config(void)
 {
 	if (pacrunner_proxy_set_auto(proxy, NULL, test_suite->pac) == 0)
-		test_config = TRUE;
+		test_config = true;
 
 	CU_ASSERT_TRUE(test_suite->config_result == test_config);
 }
@@ -333,7 +333,7 @@ static void test_manual_config(void)
 {
 	if (pacrunner_proxy_set_manual(proxy, test_suite->servers,
 						test_suite->excludes) == 0)
-		test_config = TRUE;
+		test_config = true;
 
 	CU_ASSERT_TRUE(test_suite->config_result == test_config);
 }
@@ -341,22 +341,22 @@ static void test_manual_config(void)
 static void test_proxy_requests(void)
 {
 	gchar **test_strings;
-	gboolean verify;
+	bool verify;
 	gchar *result;
 	gchar **test;
 	gchar *msg;
 
-	if (test_config == FALSE)
+	if (!test_config)
 		return;
 
-	if (verbose == TRUE)
+	if (verbose)
 		printf("\n");
 
-	for (test = test_suite->tests; *test != NULL; test = test + 2) {
+	for (test = test_suite->tests; *test; test = test + 2) {
 		gchar *test_result = *(test+1);
 
 		test_strings = g_strsplit(*test, " ", 2);
-		if (test_strings == NULL || g_strv_length(test_strings) != 2) {
+		if (!test_strings || g_strv_length(test_strings) != 2) {
 			g_strfreev(test_strings);
 			continue;
 		}
@@ -365,19 +365,19 @@ static void test_proxy_requests(void)
 						test_strings[1]);
 		g_strfreev(test_strings);
 
-		verify = FALSE;
+		verify = false;
 
 		if (strncmp(test_result, "DIRECT", 6) == 0) {
-			if (result == NULL ||
+			if (!result ||
 					strncmp(result, "DIRECT", 6) == 0)
-				verify = TRUE;
+				verify = true;
 		} else {
 			if (g_strcmp0(result, test_result) == 0)
-				verify = TRUE;
+				verify = true;
 		}
 
-		if (verbose == TRUE) {
-			if (verify == TRUE)
+		if (verbose) {
+			if (verify)
 				msg = g_strdup_printf(
 						"\tTEST: %s -> %s verified",
 							*test, test_result);
@@ -385,13 +385,13 @@ static void test_proxy_requests(void)
 				msg = g_strdup_printf(
 					"\tTEST: %s -> %s FAILED (%s)",
 					*test, test_result,
-					result == NULL ? "DIRECT" : result);
+					!result ? "DIRECT" : result);
 
 			printf("%s\n", msg);
 			g_free(msg);
 		}
 
-		if (result != NULL)
+		if (result)
 			g_free(result);
 
 		CU_ASSERT_TRUE(verify);
@@ -403,17 +403,17 @@ static void run_test_suite(const char *test_file_path, enum cu_test_mode mode)
 	CU_pTestRegistry cu_registry;
 	CU_pSuite cu_suite;
 
-	if (test_file_path == NULL)
+	if (!test_file_path)
 		return;
 
 	test_suite = read_test_suite(test_file_path);
-	if (test_suite == NULL) {
-		if (verbose == TRUE)
+	if (!test_suite) {
+		if (verbose)
 			printf("Invalid suite\n");
 		return;
 	}
 
-	if (verbose == TRUE)
+	if (verbose)
 		printf("Valid suite\n");
 
 	cu_registry = CU_create_new_registry();
@@ -424,17 +424,17 @@ static void run_test_suite(const char *test_file_path, enum cu_test_mode mode)
 	cu_suite = CU_add_suite(test_suite->title, test_suite_init,
 						test_suite_cleanup);
 
-	if (test_suite->pac != NULL)
+	if (test_suite->pac)
 		CU_add_test(cu_suite, "PAC config test", test_pac_config);
 	else
 		CU_add_test(cu_suite, "Manual config test",
 						test_manual_config);
 
-	if (test_suite->config_result == TRUE && test_suite->tests != NULL)
+	if (test_suite->config_result && test_suite->tests)
 		CU_add_test(cu_suite, "Proxy requests test",
 						test_proxy_requests);
 
-	test_config = FALSE;
+	test_config = false;
 
 	switch (mode) {
 	case CU_MODE_BASIC:
@@ -470,7 +470,7 @@ static void find_and_run_test_suite(GDir *test_dir,
 	const gchar *test_file;
 	gchar *test_file_path;
 
-	if (test_dir == NULL && test_path == NULL)
+	if (!test_dir && !test_path)
 		return;
 
 	if (CU_initialize_registry() != CUE_SUCCESS) {
@@ -478,12 +478,12 @@ static void find_and_run_test_suite(GDir *test_dir,
 		return;
 	}
 
-	if (test_dir != NULL) {
-		for (test_file = g_dir_read_name(test_dir); test_file != NULL;
+	if (test_dir) {
+		for (test_file = g_dir_read_name(test_dir); test_file;
 				test_file = g_dir_read_name(test_dir)) {
 			test_file_path = g_strdup_printf("%s/%s",
 						test_path, test_file);
-			if (test_file_path == NULL)
+			if (!test_file_path)
 				return;
 
 			run_test_suite(test_file_path, mode);
@@ -491,7 +491,7 @@ static void find_and_run_test_suite(GDir *test_dir,
 			g_free(test_file_path);
 		}
 	} else {
-		if (test_path != NULL)
+		if (test_path)
 			test_file_path = g_strdup_printf("%s/%s",
 						test_path, file_path);
 		else
@@ -509,11 +509,11 @@ static GDir *open_test_dir(gchar **test_path)
 {
 	GDir *test_dir;
 
-	if (test_path == NULL || *test_path == NULL)
+	if (!test_path || !*test_path)
 		return NULL;
 
 	test_dir = g_dir_open(*test_path, 0, NULL);
-	if (test_dir == NULL && g_path_is_absolute(*test_path) == FALSE) {
+	if (!test_dir && !g_path_is_absolute(*test_path)) {
 		gchar *current, *path;
 
 		current = g_get_current_dir();
@@ -525,7 +525,7 @@ static GDir *open_test_dir(gchar **test_path)
 		*test_path = path;
 
 		test_dir = g_dir_open(*test_path, 0, NULL);
-		if (test_dir == NULL)
+		if (!test_dir)
 			return NULL;
 	}
 
@@ -568,14 +568,14 @@ int main(int argc, char *argv[])
 			test_options, &opt_index)) != -1) {
 		switch (c) {
 		case 'd':
-			if (file_path != NULL)
+			if (file_path)
 				goto error;
 
 			test_path = g_strdup(optarg);
 
 			break;
 		case 'f':
-			if (test_path != NULL)
+			if (test_path)
 				goto error;
 
 			file_path = g_strdup(optarg);
@@ -596,7 +596,7 @@ int main(int argc, char *argv[])
 
 			break;
 		case 'v':
-			verbose = TRUE;
+			verbose = true;
 
 			break;
 		case '?':
@@ -606,18 +606,18 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (test_path == NULL && file_path == NULL)
+	if (!test_path && !file_path)
 		goto error;
 
-	if (test_path != NULL) {
+	if (test_path) {
 		test_dir = open_test_dir(&test_path);
-		if (test_dir == NULL) {
+		if (!test_dir) {
 			g_free(test_path);
 			return EXIT_FAILURE;
 		}
 	}
 
-	if (file_path != NULL)
+	if (file_path)
 		test_path = g_get_current_dir();
 
 	__pacrunner_proxy_init();
@@ -634,7 +634,7 @@ int main(int argc, char *argv[])
 
 	g_free(test_path);
 
-	if (test_dir != NULL)
+	if (test_dir)
 		g_dir_close(test_dir);
 
 	return EXIT_SUCCESS;

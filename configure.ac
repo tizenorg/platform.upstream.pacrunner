@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT(pacrunner, 0.7)
+AC_INIT(pacrunner, 0.8)
 
 AM_INIT_AUTOMAKE([foreign subdir-objects color-tests])
 AC_CONFIG_HEADERS(config.h)
@@ -148,4 +148,4 @@ AC_ARG_ENABLE(datafiles, AC_HELP_STRING([--disable-datafiles],
 					[enable_datafiles=${enableval}])
 AM_CONDITIONAL(DATAFILES, test "${enable_datafiles}" != "no")
 
-AC_OUTPUT(Makefile src/org.pacrunner.service libproxy/libproxy-1.0.pc)
+AC_OUTPUT(Makefile src/pacrunner.service libproxy/libproxy-1.0.pc)

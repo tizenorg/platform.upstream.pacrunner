@@ -39,32 +39,32 @@ struct pacrunner_plugin {
 	struct pacrunner_plugin_desc *desc;
 };
 
-static gboolean add_plugin(void *handle, struct pacrunner_plugin_desc *desc)
+static bool add_plugin(void *handle, struct pacrunner_plugin_desc *desc)
 {
 	struct pacrunner_plugin *plugin;
 
-	if (desc->init == NULL)
-		return FALSE;
+	if (!desc->init)
+		return false;
 
 	plugin = g_try_new0(struct pacrunner_plugin, 1);
-	if (plugin == NULL)
-		return FALSE;
+	if (!plugin)
+		return false;
 
 	plugin->handle = handle;
 	plugin->desc = desc;
 
 	if (desc->init() < 0) {
 		g_free(plugin);
-		return FALSE;
+		return false;
 	}
 
 	plugins = g_slist_append(plugins, plugin);
 	DBG("Plugin %s loaded", desc->name);
 
-	return TRUE;
+	return true;
 }
 
-static gboolean check_plugin(struct pacrunner_plugin_desc *desc,
+static bool check_plugin(struct pacrunner_plugin_desc *desc,
 				char **patterns, char **excludes)
 {
 	if (excludes) {
@@ -73,7 +73,7 @@ static gboolean check_plugin(struct pacrunner_plugin_desc *desc,
 				break;
 		if (*excludes) {
 			pacrunner_info("Excluding %s", desc->name);
-			return FALSE;
+			return false;
 		}
 	}
 
@@ -83,11 +83,11 @@ static gboolean check_plugin(struct pacrunner_plugin_desc *desc,
 				break;
 		if (!*patterns) {
 			pacrunner_info("Ignoring %s", desc->name);
-			return FALSE;
+			return false;
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 #include "builtin.h"
@@ -112,30 +112,29 @@ int __pacrunner_plugin_init(const char *pattern, const char *exclude)
 		excludes = g_strsplit_set(exclude, ", ", -1);
 
 	for (i = 0; __pacrunner_builtin[i]; i++) {
-		if (check_plugin(__pacrunner_builtin[i],
-						patterns, excludes) == FALSE)
+		if (!check_plugin(__pacrunner_builtin[i], patterns, excludes))
 			continue;
 
 		add_plugin(NULL, __pacrunner_builtin[i]);
 	}
 
 	dir = g_dir_open(PLUGINDIR, 0, NULL);
-	if (dir == NULL)
+	if (!dir)
 		return -EIO;
 
-	while ((file = g_dir_read_name(dir)) != NULL) {
+	while ((file = g_dir_read_name(dir))) {
 		struct pacrunner_plugin_desc *desc;
 		void *handle;
 		char *filename;
 
-		if (g_str_has_prefix(file, "lib") == TRUE ||
-				g_str_has_suffix(file, ".so") == FALSE)
+		if (g_str_has_prefix(file, "lib") ||
+				!g_str_has_suffix(file, ".so"))
 			continue;
 
 		filename = g_build_filename(PLUGINDIR, file, NULL);
 
 		handle = dlopen(filename, RTLD_NOW);
-		if (handle == NULL) {
+		if (!handle) {
 			pacrunner_error("Can't load plugin %s: %s",
 							filename, dlerror());
 			g_free(filename);
@@ -145,19 +144,19 @@ int __pacrunner_plugin_init(const char *pattern, const char *exclude)
 		g_free(filename);
 
 		desc = dlsym(handle, "pacrunner_plugin_desc");
-		if (desc == NULL) {
+		if (!desc) {
 			pacrunner_error("Can't load plugin description: %s",
 								dlerror());
 			dlclose(handle);
 			continue;
 		}
 
-		if (check_plugin(desc, patterns, excludes) == FALSE) {
+		if (!check_plugin(desc, patterns, excludes)) {
 			dlclose(handle);
 			continue;
 		}
 
-		if (add_plugin(handle, desc) == FALSE)
+		if (!add_plugin(handle, desc))
 				dlclose(handle);
 	}
 
@@ -181,7 +180,7 @@ void __pacrunner_plugin_cleanup(void)
 		if (plugin->desc->exit)
 			plugin->desc->exit();
 
-		if (plugin->handle != NULL)
+		if (plugin->handle)
 			dlclose(plugin->handle);
 
 		g_free(plugin);

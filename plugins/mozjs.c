@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <pthread.h>
 
 #include <netdb.h>
 #include <arpa/inet.h>
@@ -41,7 +42,7 @@
 #include "pacrunner.h"
 #include "js.h"
 
-static GStaticMutex mozjs_mutex = G_STATIC_MUTEX_INIT;
+static pthread_mutex_t mozjs_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static struct pacrunner_proxy *current_proxy = NULL;
 
@@ -99,11 +100,11 @@ static JSBool myipaddress(JSContext *ctx, uintN argc, jsval *vp)
 
 	JS_SET_RVAL(ctx, vp, JSVAL_NULL);
 
-	if (current_proxy == NULL)
+	if (!current_proxy)
 		return JS_TRUE;
 
 	interface = pacrunner_proxy_get_interface(current_proxy);
-	if (interface == NULL)
+	if (!interface)
 		return JS_TRUE;
 
 	if (getaddr(interface, address, sizeof(address)) < 0)
@@ -156,11 +157,11 @@ static void create_object(void)
 	const char *script;
 	jsval rval;
 
-	if (current_proxy == NULL)
+	if (!current_proxy)
 		return;
 
 	script = pacrunner_proxy_get_script(current_proxy);
-	if (script == NULL)
+	if (!script)
 		return;
 
 	jsctx = JS_NewContext(jsrun, 8 * 1024);
@@ -186,7 +187,7 @@ static void create_object(void)
 
 static void destroy_object(void)
 {
-	if (jsctx == NULL)
+	if (!jsctx)
 		return;
 
 	JS_DestroyContext(jsctx);
@@ -199,12 +200,12 @@ static int mozjs_set_proxy(struct pacrunner_proxy *proxy)
 {
 	DBG("proxy %p", proxy);
 
-	if (current_proxy != NULL)
+	if (current_proxy)
 		destroy_object();
 
 	current_proxy = proxy;
 
-	if (current_proxy != NULL)
+	if (current_proxy)
 		create_object();
 
 	return 0;
@@ -218,10 +219,10 @@ static char * mozjs_execute(const char *url, const char *host)
 
 	DBG("url %s host %s", url, host);
 
-	if (jsctx == NULL)
+	if (!jsctx)
 		return NULL;
 
-	g_static_mutex_lock(&mozjs_mutex);
+	pthread_mutex_lock(&mozjs_mutex);
 
 	JS_BeginRequest(jsctx);
 
@@ -235,7 +236,7 @@ static char * mozjs_execute(const char *url, const char *host)
 
 	JS_MaybeGC(jsctx);
 
-	g_static_mutex_unlock(&mozjs_mutex);
+	pthread_mutex_unlock(&mozjs_mutex);
 
 	if (result) {
 		answer = JS_EncodeString(jsctx, JS_ValueToString(jsctx, rval));

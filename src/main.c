@@ -119,7 +119,7 @@ static gchar *option_noplugin = NULL;
 static gboolean option_detach = TRUE;
 static gboolean option_version = FALSE;
 
-static gboolean parse_debug(const char *key, const char *value,
+static bool parse_debug(const char *key, const char *value,
 					gpointer user_data, GError **error)
 {
 	if (value)
@@ -127,7 +127,7 @@ static gboolean parse_debug(const char *key, const char *value,
 	else
 		option_debug = g_strdup("*");
 
-	return TRUE;
+	return true;
 }
 
 static GOptionEntry options[] = {
@@ -157,8 +157,8 @@ int main(int argc, char *argv[])
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, options, NULL);
 
-	if (g_option_context_parse(context, &argc, &argv, &error) == FALSE) {
-		if (error != NULL) {
+	if (!g_option_context_parse(context, &argc, &argv, &error)) {
+		if (error) {
 			g_printerr("%s\n", error->message);
 			g_error_free(error);
 		} else
@@ -168,12 +168,12 @@ int main(int argc, char *argv[])
 
 	g_option_context_free(context);
 
-	if (option_version == TRUE) {
+	if (option_version) {
 		printf("%s\n", VERSION);
 		exit(0);
 	}
 
-	if (option_detach == TRUE) {
+	if (option_detach) {
 		if (daemon(0, 0)) {
 			perror("Can't start daemon");
 			exit(1);
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 
 	main_loop = g_main_loop_new(NULL, FALSE);
 
-	if (dbus_threads_init_default() == FALSE) {
+	if (!dbus_threads_init_default()) {
 		fprintf(stderr, "Can't init usage of threads\n");
 		exit(1);
 	}
@@ -192,8 +192,8 @@ int main(int argc, char *argv[])
 	dbus_error_init(&err);
 
 	conn = g_dbus_setup_bus(DBUS_BUS_SYSTEM, PACRUNNER_SERVICE, &err);
-	if (conn == NULL) {
-		if (dbus_error_is_set(&err) == TRUE) {
+	if (!conn) {
+		if (dbus_error_is_set(&err)) {
 			fprintf(stderr, "%s\n", err.message);
 			dbus_error_free(&err);
 		} else

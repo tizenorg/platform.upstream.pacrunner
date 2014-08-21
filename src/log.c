@@ -77,23 +77,23 @@ extern struct pacrunner_debug_desc __stop___debug[];
 
 static gchar **enabled = NULL;
 
-static gboolean is_enabled(struct pacrunner_debug_desc *desc)
+static bool is_enabled(struct pacrunner_debug_desc *desc)
 {
 	int i;
 
-	if (enabled == NULL)
-		return FALSE;
+	if (!enabled)
+		return false;
 
-	for (i = 0; enabled[i] != NULL; i++) {
-		if (desc->name != NULL && g_pattern_match_simple(enabled[i],
-							desc->name) == TRUE)
-			return TRUE;
-		if (desc->file != NULL && g_pattern_match_simple(enabled[i],
-							desc->file) == TRUE)
-			return TRUE;
+	for (i = 0; enabled[i]; i++) {
+		if (desc->name && g_pattern_match_simple(enabled[i],
+							desc->name))
+			return true;
+		if (desc->file && g_pattern_match_simple(enabled[i],
+							desc->file))
+			return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 int __pacrunner_log_init(const char *debug, gboolean detach)
@@ -102,23 +102,23 @@ int __pacrunner_log_init(const char *debug, gboolean detach)
 	struct pacrunner_debug_desc *desc;
 	const char *name = NULL, *file = NULL;
 
-	if (debug != NULL)
+	if (debug)
 		enabled = g_strsplit_set(debug, ":, ", 0);
 
 	for (desc = __start___debug; desc < __stop___debug; desc++) {
-		if (file != NULL || name != NULL) {
+		if (file || name) {
 			if (g_strcmp0(desc->file, file) == 0) {
-				if (desc->name == NULL)
+				if (!desc->name)
 					desc->name = name;
 			} else
 				file = NULL;
 		}
 
-		if (is_enabled(desc) == TRUE)
+		if (is_enabled(desc))
 			desc->flags |= PACRUNNER_DEBUG_FLAG_PRINT;
 	}
 
-	if (detach == FALSE)
+	if (!detach)
 		option |= LOG_PERROR;
 
 	openlog("pacrunner", option, LOG_DAEMON);
