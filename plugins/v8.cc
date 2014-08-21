@@ -48,8 +48,9 @@ static guint gc_source = 0;
 
 static gboolean v8_gc(gpointer user_data)
 {
-	v8::Locker lck;
-	return !v8::V8::IdleNotification();
+        const int kLongIdlePauseInMs = 1000;
+	v8::Locker lck(v8::Isolate::GetCurrent());
+	return !v8::Isolate::GetCurrent()->IdleNotification(kLongIdlePauseInMs);
 }
 
 static int getaddr(const char *node, char *host, size_t hostlen)
@@ -97,45 +98,54 @@ static int resolve(const char *node, char *host, size_t hostlen)
 	return 0;
 }
 
-static v8::Handle<v8::Value> myipaddress(const v8::Arguments& args)
+static void myipaddress(const v8::FunctionCallbackInfo<v8::Value>& args)
 {
 	const char *interface;
 	char address[NI_MAXHOST];
 
 	DBG("");
 
-	if (current_proxy == NULL)
-		return v8::ThrowException(v8::String::New("No current proxy"));
+	if (current_proxy == NULL) {
+		args.GetIsolate()->ThrowException(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "No current proxy"));
+		return;
+	}
 
 	interface = pacrunner_proxy_get_interface(current_proxy);
-	if (interface == NULL)
-		return v8::ThrowException(v8::String::New("Error fetching interface"));
+	if (interface == NULL) {
+		args.GetIsolate()->ThrowException(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "Error fetching interface"));
+		return;
+	}
 
-	if (getaddr(interface, address, sizeof(address)) < 0)
-		return v8::ThrowException(v8::String::New("Error fetching IP address"));
+	if (getaddr(interface, address, sizeof(address)) < 0) {
+		args.GetIsolate()->ThrowException(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "Error fetching IP address"));
+		return;
+	}
 
 	DBG("address %s", address);
 
-	return v8::String::New(address);
+	args.GetReturnValue().Set(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), address));
 }
 
-static v8::Handle<v8::Value> dnsresolve(const v8::Arguments& args)
+static void dnsresolve(const v8::FunctionCallbackInfo<v8::Value>& args)
 {
 	char address[NI_MAXHOST];
 	v8::String::Utf8Value host(args[0]);
 
-	if (args.Length() != 1)
-		return v8::ThrowException(v8::String::New("Bad parameters"));
-
+	if (args.Length() != 1) {
+		args.GetIsolate()->ThrowException(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "Bad parameters"));
+		return;
+	}
 		
 	DBG("host %s", *host);
 
-	if (resolve(*host, address, sizeof(address)) < 0)
-		return v8::ThrowException(v8::String::New("Failed to resolve"));
+	if (resolve(*host, address, sizeof(address)) < 0) {
+		args.GetIsolate()->ThrowException(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "Failed to resolve"));
+		return;
+	}
 
 	DBG("address %s", address);
 
-	return v8::String::New(address);
+	args.GetReturnValue().Set(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), address));
 }
 
 static void create_object(void)
@@ -148,79 +158,80 @@ static void create_object(void)
 		printf("no script\n");
 		return;
 	}
-	v8::HandleScope handle_scope;
 	v8::Handle<v8::ObjectTemplate> global = v8::ObjectTemplate::New();
 
-	global->Set(v8::String::New("myIpAddress"),
-		    v8::FunctionTemplate::New(myipaddress));
-	global->Set(v8::String::New("dnsResolve"),
-		    v8::FunctionTemplate::New(dnsresolve));
+	global->Set(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "myIpAddress"),
+		    v8::FunctionTemplate::New(v8::Isolate::GetCurrent(), myipaddress));
+	global->Set(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "dnsResolve"),
+		    v8::FunctionTemplate::New(v8::Isolate::GetCurrent(), dnsresolve));
 
-	jsctx = v8::Context::New(NULL, global);
-	v8::Context::Scope context_scope(jsctx);
+	v8::Handle<v8::Context> ctx = v8::Context::New(v8::Isolate::GetCurrent(), NULL, global);
+	jsctx.Reset(v8::Isolate::GetCurrent(), ctx);
+
+	v8::Context::Scope context_scope(ctx);
 
 	v8::TryCatch exc;
 	v8::Handle<v8::Script> script_scr;
 	v8::Handle<v8::Value> result;
 
-	script_scr = v8::Script::Compile(v8::String::New(JAVASCRIPT_ROUTINES));
+	script_scr = v8::Script::Compile(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), JAVASCRIPT_ROUTINES));
 	if (script_scr.IsEmpty()) {
 		v8::String::Utf8Value err(exc.Exception());
 		DBG("Javascript failed to compile: %s", *err);
-		jsctx.Dispose();
+		jsctx.Reset();
 		return;
 	}
 	result = script_scr->Run();
 	if (exc.HasCaught()) {
 		v8::String::Utf8Value err(exc.Exception());
 		DBG("Javascript library failed: %s", *err);
-		jsctx.Dispose();
+		jsctx.Reset();
 		return;
 	}
 
-	script_scr = v8::Script::Compile(v8::String::New(pac));
+	script_scr = v8::Script::Compile(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), pac));
 	if (script_scr.IsEmpty()) {
 		v8::String::Utf8Value err(exc.Exception());
 		DBG("PAC script failed to compile: %s", *err);
-		jsctx.Dispose();
+		jsctx.Reset();
 		return;
 	}
 	result = script_scr->Run();
 	if (exc.HasCaught()) {
 		v8::String::Utf8Value err(exc.Exception());
 		DBG("PAC script failed: %s", *err);
-		jsctx.Dispose();
+		jsctx.Reset();
 		return;
 	}
 
-	v8::Handle<v8::String> fn_name = v8::String::New("FindProxyForURL");
-	v8::Handle<v8::Value> fn_val = jsctx->Global()->Get(fn_name);
+	v8::Handle<v8::String> fn_name = v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "FindProxyForURL");
+	v8::Handle<v8::Value> fn_val = ctx->Global()->Get(fn_name);
 
 	if (!fn_val->IsFunction()) {
 		DBG("FindProxyForUrl is not a function");
-		jsctx.Dispose();
+		jsctx.Reset();
 		return;
 	}
-	
-	jsfn = v8::Persistent<v8::Function>::New(v8::Handle<v8::Function>::Cast(fn_val));
+
+	v8::Handle<v8::Function> fn = v8::Handle<v8::Function>::Cast(fn_val);
+	jsfn.Reset(v8::Isolate::GetCurrent(), fn);
+
 	return;
 }
 
 static void destroy_object(void)
 {
 	if (!jsfn.IsEmpty()) {
-		jsfn.Dispose();
-		jsfn.Clear();
+		jsfn.Reset();
 	}
 	if (!jsctx.IsEmpty()) {
-		jsctx.Dispose();
-		jsctx.Clear();
+		jsctx.Reset();
 	}
 }
 
 static int v8_set_proxy(struct pacrunner_proxy *proxy)
 {
-	v8::Locker lck;
+	v8::Locker lck(v8::Isolate::GetCurrent());
 
 	DBG("proxy %p", proxy);
 
@@ -241,25 +252,27 @@ static int v8_set_proxy(struct pacrunner_proxy *proxy)
 
 static char *v8_execute(const char *url, const char *host)
 {
-	v8::Locker lck;
+	v8::Locker lck(v8::Isolate::GetCurrent());
 
 	DBG("url %s host %s", url, host);
 
 	if (jsctx.IsEmpty() || jsfn.IsEmpty())
 		return NULL;
 
-	v8::HandleScope handle_scope;
-	v8::Context::Scope context_scope(jsctx);
+	v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(v8::Isolate::GetCurrent(), jsctx);
+	v8::Local<v8::Function> func = v8::Local<v8::Function>::New(v8::Isolate::GetCurrent(), jsfn);
+
+	v8::Context::Scope context_scope(ctx);
 
 	v8::Handle<v8::Value> args[2] = {
-		v8::String::New(url),
-		v8::String::New(host)
+		v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), url),
+		v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), host)
 	};
 
 	v8::Handle<v8::Value> result;
 	v8::TryCatch exc;
 
-	result = jsfn->Call(jsctx->Global(), 2, args);
+	result = func->Call(ctx->Global(), 2, args);
 	if (exc.HasCaught()) {
 		v8::Handle<v8::Message> msg = exc.Message();
 		int line = msg->GetLineNumber();
@@ -298,6 +311,8 @@ static int v8_init(void)
 
 static void v8_exit(void)
 {
+        const int kLongIdlePauseInMs = 1000;
+
 	DBG("");
 
 	pacrunner_js_driver_unregister(&v8_driver);
@@ -308,7 +323,7 @@ static void v8_exit(void)
 		g_source_remove(gc_source);
 		gc_source = 0;
 	}
-	while (!v8::V8::IdleNotification())
+	while (!v8::Isolate::GetCurrent()->IdleNotification(kLongIdlePauseInMs))
 		;
 }
 
