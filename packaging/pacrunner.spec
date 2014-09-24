@@ -7,7 +7,6 @@ Summary:        Proxy configuration daemon
 Group:          Connectivity/Connection Management
 Source:         %{name}-%{version}.tar.xz
 Source1001: 	pacrunner.manifest
-BuildRequires:  v8-devel
 BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(libcurl)
@@ -65,8 +64,7 @@ Libproxy library Development Files.
 cp %{SOURCE1001} .
 
 %build
-%reconfigure --enable-v8 \
-            --enable-libproxy \
+%reconfigure --enable-libproxy \
             --enable-curl \
             --enable-test
 make %{?_smp_mflags}
